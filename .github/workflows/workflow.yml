@@ -96,6 +96,39 @@ jobs:
           username: ${{ steps.setup-cli.outputs.oidc-user }}
           password: ${{ steps.setup-cli.outputs.oidc-token }}
 
+      - name: Docker Build and Push
+        uses: docker/build-push-action@v5
+        id: build
+        with:
+          push: true
+          platforms: linux/amd64, linux/arm64
+          tags: ${{ vars.JF_URL }}/${{ github.event.inputs.rt_docker_repo }}/${{ github.event.inputs.docker_image_name }}
+          provenance: false
+      
+      - name: Publish Release Note and HELM charts
+        env:
+          JFROG_CLI_BUILD_NAME: ${{ github.event.inputs.build_name }}
+          JFROG_CLI_BUILD_PROJECT: ${{ vars.JF_PROJECT }}
+        run: |
+          jf rt u rn/Release-Note-App-1.0.pdf ${{ github.event.inputs.rt_generic_repo }} --flat --module="release_note:$GITHUB_RUN_NUMBER"
+          jf rt u "helm/*.tgz" ${{ github.event.inputs.rt_helm_repo }} --flat --module="helm_charts:$GITHUB_RUN_NUMBER"
+      
+      - name: Publish Build Info
+        env:
+          JFROG_CLI_BUILD_NAME: ${{ github.event.inputs.build_name }}
+          JFROG_CLI_BUILD_PROJECT: ${{ vars.JF_PROJECT }}
+        run: |
+          jf rt build-collect-env $JFROG_CLI_BUILD_NAME $GITHUB_RUN_NUMBER 
+          jf rt build-add-git $JFROG_CLI_BUILD_NAME $GITHUB_RUN_NUMBER 
+          jf rt build-publish $JFROG_CLI_BUILD_NAME $GITHUB_RUN_NUMBER 
+      
+      - name: Build Scan
+        env:
+          JFROG_CLI_BUILD_NAME: ${{ github.event.inputs.build_name }}
+          JFROG_CLI_BUILD_PROJECT: ${{ vars.JF_PROJECT }}
+        run: |            
+          jf build-scan $JFROG_CLI_BUILD_NAME $GITHUB_RUN_NUMBER
+      
       #- name: Docker build and push
       #  env:
       #    JFROG_CLI_BUILD_PROJECT: ${{ vars.JF_PROJECT }}
@@ -106,38 +139,6 @@ jobs:
       #    docker tag ${{ github.event.inputs.docker_image_name }}:$GITHUB_RUN_NUMBER $JF_URL/${{ github.event.inputs.rt_docker_repo }}/${{ github.event.inputs.docker_image_name }}:$GITHUB_RUN_NUMBER
       #    docker build --build-arg JF_TOKEN=${JF_ENV_1} . -t ${{ github.event.inputs.docker_image_name }}:$GITHUB_RUN_NUMBER
       #    jf docker push $JF_URL/${{ github.event.inputs.rt_docker_repo }}/${{ github.event.inputs.docker_image_name }}:$GITHUB_RUN_NUMBER --build-name=$JFROG_CLI_BUILD_NAME --build-number=$GITHUB_RUN_NUMBER 
-
-      - name: Docker Build and Push
-        uses: docker/build-push-action@v5
-        id: build
-        with:
-          push: true
-          platforms: linux/amd64, linux/arm64
-          tags: ${{ vars.JF_URL }}/${{ github.event.inputs.rt_docker_repo }}/${{ github.event.inputs.docker_image_name }}
-          provenance: false
-      
-      - name: Publish release note and HELM charts
-        env:
-          JFROG_CLI_BUILD_PROJECT: ${{ vars.JF_PROJECT }}
-          JFROG_CLI_BUILD_NAME: ${{ github.event.inputs.build_name }}
-        run: |
-          jf rt u rn/Release-Note-App-1.0.pdf ${{ github.event.inputs.rt_generic_repo }} --flat --module="release_note:$GITHUB_RUN_NUMBER"
-          jf rt u "helm/*.tgz" ${{ github.event.inputs.rt_helm_repo }} --flat --module="helm_charts:$GITHUB_RUN_NUMBER"
-      
-      - name: Publish Build Info
-        env:
-          JFROG_CLI_BUILD_NAME: ${{ github.event.inputs.build_name }}
-        run: |
-          jf rt build-collect-env $JFROG_CLI_BUILD_NAME $GITHUB_RUN_NUMBER 
-          jf rt build-add-git $JFROG_CLI_BUILD_NAME $GITHUB_RUN_NUMBER 
-          jf rt build-publish $JFROG_CLI_BUILD_NAME $GITHUB_RUN_NUMBER 
-      
-      - name: Build Scan
-        env:
-          JFROG_CLI_BUILD_NAME: ${{ github.event.inputs.build_name }}
-        run: |            
-          jf build-scan $JFROG_CLI_BUILD_NAME $GITHUB_RUN_NUMBER 
-      
       
       #- name: Publish build 
       #  env:
