@@ -129,7 +129,6 @@ jobs:
           JFROG_CLI_BUILD_NAME: ${{ github.event.inputs.build_name }}
         run: |
           jf rt build-collect-env $JFROG_CLI_BUILD_NAME $GITHUB_RUN_NUMBER 
-          jf rt build-add-dependencies . $JFROG_CLI_BUILD_NAME $GITHUB_RUN_NUMBER 
           jf rt build-add-git $JFROG_CLI_BUILD_NAME $GITHUB_RUN_NUMBER 
           jf rt build-publish $JFROG_CLI_BUILD_NAME $GITHUB_RUN_NUMBER 
       
