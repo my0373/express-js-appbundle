@@ -71,14 +71,13 @@ jobs:
         env:
           JF_URL: https://${{ vars.JF_URL }}/
           JF_PROJECT: ${{ vars.JF_PROJECT }}
+          JFROG_CLI_BUILD_NAME: ${{ github.event.inputs.build_name }}
         with:
             version: latest
             oidc-provider-name: carminea-github
             oidc-audience: carminea-audience
       
       - name: NPM Audit 
-        env:
-          JFROG_CLI_BUILD_NAME: ${{ github.event.inputs.build_name }}
         run: |
           jf npmc --repo-resolve ${{ github.event.inputs.rt_npm_remote_repo_id }}
           jf npm i --omit dev --build-name=$JFROG_CLI_BUILD_NAME --build-number=$GITHUB_RUN_NUMBER
