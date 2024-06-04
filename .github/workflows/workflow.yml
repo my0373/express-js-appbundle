@@ -77,12 +77,8 @@ jobs:
       
       - name: NPM Audit 
         env:
-          JFROG_CLI_BUILD_PROJECT: ${{ vars.JF_PROJECT }}
           JFROG_CLI_BUILD_NAME: ${{ github.event.inputs.build_name }}
-          JFROG_CLI_BUILD_NUMBER: $GITHUB_RUN_NUMBER
         run: |
-          jf rt bce $JFROG_CLI_BUILD_NAME $GITHUB_RUN_NUMBER 
-          jf rt bag $JFROG_CLI_BUILD_NAME $GITHUB_RUN_NUMBER
           jf npmc --repo-resolve ${{ github.event.inputs.rt_npm_remote_repo_id }}
           jf npm i --omit dev --build-name=$JFROG_CLI_BUILD_NAME --build-number=$GITHUB_RUN_NUMBER
           
@@ -99,6 +95,17 @@ jobs:
           registry: ${{ vars.JF_URL }}
           username: ${{ steps.setup-cli.outputs.oidc-user }}
           password: ${{ steps.setup-cli.outputs.oidc-token }}
+
+      #- name: Docker build and push
+      #  env:
+      #    JFROG_CLI_BUILD_PROJECT: ${{ vars.JF_PROJECT }}
+      #    JFROG_CLI_BUILD_NAME: ${{ github.event.inputs.build_name }}
+      #    JF_ENV_1: ${{ secrets.JF_SECRET_ENV_1 }}
+      #    JF_URL: https://${{ vars.JF_URL }}/
+      #  run: |
+      #    docker tag ${{ github.event.inputs.docker_image_name }}:$GITHUB_RUN_NUMBER $JF_URL/${{ github.event.inputs.rt_docker_repo }}/${{ github.event.inputs.docker_image_name }}:$GITHUB_RUN_NUMBER
+      #    docker build --build-arg JF_TOKEN=${JF_ENV_1} . -t ${{ github.event.inputs.docker_image_name }}:$GITHUB_RUN_NUMBER
+      #    jf docker push $JF_URL/${{ github.event.inputs.rt_docker_repo }}/${{ github.event.inputs.docker_image_name }}:$GITHUB_RUN_NUMBER --build-name=$JFROG_CLI_BUILD_NAME --build-number=$GITHUB_RUN_NUMBER 
 
       - name: Docker Build and Push
         uses: docker/build-push-action@v5
@@ -118,26 +125,20 @@ jobs:
           jf rt u "helm/*.tgz" ${{ github.event.inputs.rt_helm_repo }} --flat --module="helm_charts:$GITHUB_RUN_NUMBER"
       
       - name: Publish Build Info
+        env:
+          JFROG_CLI_BUILD_NAME: ${{ github.event.inputs.build_name }}
         run: |
-          jf rt build-collect-env 
-          jf rt build-add-dependencies .
-          jf rt build-add-git
-          jf rt build-publish
+          jf rt build-collect-env $JFROG_CLI_BUILD_NAME $GITHUB_RUN_NUMBER 
+          jf rt build-add-dependencies . $JFROG_CLI_BUILD_NAME $GITHUB_RUN_NUMBER 
+          jf rt build-add-git $JFROG_CLI_BUILD_NAME $GITHUB_RUN_NUMBER 
+          jf rt build-publish $JFROG_CLI_BUILD_NAME $GITHUB_RUN_NUMBER 
       
       - name: Build Scan
+        env:
+          JFROG_CLI_BUILD_NAME: ${{ github.event.inputs.build_name }}
         run: |            
-          jf build-scan
+          jf build-scan $JFROG_CLI_BUILD_NAME $GITHUB_RUN_NUMBER 
       
-      #- name: Docker build and push
-      #  env:
-      #    JFROG_CLI_BUILD_PROJECT: ${{ vars.JF_PROJECT }}
-      #    JFROG_CLI_BUILD_NAME: ${{ github.event.inputs.build_name }}
-      #    JF_ENV_1: ${{ secrets.JF_SECRET_ENV_1 }}
-      #    JF_HOST: ${{ secrets.JF_HOST }}
-      #  run: |
-      #    docker tag ${{ github.event.inputs.docker_image_name }}:$GITHUB_RUN_NUMBER $JF_HOST/${{ github.event.inputs.rt_docker_repo }}/${{ github.event.inputs.docker_image_name }}:$GITHUB_RUN_NUMBER
-      #    docker build --build-arg JF_TOKEN=${JF_ENV_1} . -t ${{ github.event.inputs.docker_image_name }}:$GITHUB_RUN_NUMBER
-      #    jf docker push $JF_HOST/${{ github.event.inputs.rt_docker_repo }}/${{ github.event.inputs.docker_image_name }}:$GITHUB_RUN_NUMBER --build-name=$JFROG_CLI_BUILD_NAME --build-number=$GITHUB_RUN_NUMBER 
       
       #- name: Publish build 
       #  env:
