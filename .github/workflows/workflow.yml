@@ -73,6 +73,7 @@ jobs:
         with:
             version: latest
             oidc-provider-name: carminea-github
+            oidc-provider-audience: carminea-audience
       
       - name: NPM Audit 
         env:
