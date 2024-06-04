@@ -58,12 +58,13 @@ jobs:
         run: echo "${{ toJSON(github.event.inputs) }}"
       - name: Checkout
         uses: actions/checkout@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
       - name: Install Node
         uses: actions/setup-node@v3
         with:
             node-version: 18
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      
       - name: Setup JFrog CLI 
         uses: jfrog/setup-jfrog-cli@v4
         id: setup-cli
@@ -108,26 +109,19 @@ jobs:
       - name: Publish Release Note and HELM charts
         env:
           JFROG_CLI_BUILD_NAME: ${{ github.event.inputs.build_name }}
-          JFROG_CLI_BUILD_PROJECT: ${{ vars.JF_PROJECT }}
         run: |
           jf rt u rn/Release-Note-App-1.0.pdf ${{ github.event.inputs.rt_generic_repo }} --flat --module="release_note:$GITHUB_RUN_NUMBER"
           jf rt u "helm/*.tgz" ${{ github.event.inputs.rt_helm_repo }} --flat --module="helm_charts:$GITHUB_RUN_NUMBER"
       
       - name: Publish Build Info
-        env:
-          JFROG_CLI_BUILD_NAME: ${{ github.event.inputs.build_name }}
-          JFROG_CLI_BUILD_PROJECT: ${{ vars.JF_PROJECT }}
         run: |
-          jf rt build-collect-env $JFROG_CLI_BUILD_NAME $GITHUB_RUN_NUMBER 
-          jf rt build-add-git $JFROG_CLI_BUILD_NAME $GITHUB_RUN_NUMBER 
-          jf rt build-publish $JFROG_CLI_BUILD_NAME $GITHUB_RUN_NUMBER 
+          jf rt build-collect-env
+          jf rt build-add-git
+          jf rt build-publish
       
       - name: Build Scan
-        env:
-          JFROG_CLI_BUILD_NAME: ${{ github.event.inputs.build_name }}
-          JFROG_CLI_BUILD_PROJECT: ${{ vars.JF_PROJECT }}
         run: |            
-          jf build-scan $JFROG_CLI_BUILD_NAME $GITHUB_RUN_NUMBER
+          jf build-scan
       
       #- name: Docker build and push
       #  env:
