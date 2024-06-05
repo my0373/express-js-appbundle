@@ -103,13 +103,13 @@ jobs:
         with:
           push: true
           platforms: linux/amd64, linux/arm64
-          tags: ${{ vars.JF_URL }}/${{ env.DOCKER_REPO }}/${{ env.IMAGE_NAME }}
+          tags: ${{ vars.JF_URL }}/${{ env.DOCKER_REPO }}/${{ env.IMAGE_NAME }}:$GITHUB_RUN_NUMBER
           provenance: false
       
-      - name: docker scan
-        run: |  
-           jf docker pull ${{ vars.JF_URL }}/${{ env.DOCKER_REPO }}/${{ env.IMAGE_NAME }}
-           jf docker scan ${{ vars.JF_URL }}/${{ env.DOCKER_REPO }}/${{ env.IMAGE_NAME }}
+      #- name: docker scan
+      #  run: |  
+      #     jf docker pull ${{ vars.JF_URL }}/${{ env.DOCKER_REPO }}/${{ env.IMAGE_NAME }}:$GITHUB_RUN_NUMBER
+      #     jf docker scan ${{ vars.JF_URL }}/${{ env.DOCKER_REPO }}/${{ env.IMAGE_NAME }}:$GITHUB_RUN_NUMBER
       
       - name: Docker Add Package to Build
         run: |  
@@ -124,6 +124,8 @@ jobs:
       #    jf rt u "helm/*.tgz" ${{ github.event.inputs.rt_helm_repo }} --flat --module="helm_charts:$GITHUB_RUN_NUMBER"
       
       - name: Publish Build Info
+        env:
+          JFROG_CLI_BUILD_PROJECT: ${{ vars.JF_PROJECT }}
         run: |
           jf rt build-collect-env
           jf rt build-add-git
