@@ -46,8 +46,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      JF_URL: https://${{ vars.JF_URL }}/
-      JF_PROJECT: ${{ vars.JF_PROJECT_KEY }}
       DOCKER_REPO: ${{ github.event.inputs.rt_docker_repo }}
       IMAGE_NAME: ${{ github.event.inputs.docker_image_name }}
     # Here we install all the tools : docker buildx, QEMU, JDK 11, JFrog CLI
