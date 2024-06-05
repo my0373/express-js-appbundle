@@ -15,17 +15,17 @@ on:
       rt_generic_repo:
         required: true
         type: string
-        default: "generic-dev-local"
+        default: "carm-generic-dev-local"
         description: "Artifactory Generic repository"
       rt_helm_repo:
         required: true
         type: string
-        default: "helm-dev-local"
+        default: "carm-helm-dev-local"
         description: "Artifactory HELM repository"
       rt_docker_repo:
         required: true
         type: string
-        default: "docker-dev-local"
+        default: "carm-docker-dev-local"
         description: "Artifactory Docker repository"
       docker_image_name:
         required: true
@@ -104,6 +104,11 @@ jobs:
           platforms: linux/amd64, linux/arm64
           tags: ${{ vars.JF_URL }}/${{ github.event.inputs.rt_docker_repo }}/${{ github.event.inputs.docker_image_name }}
           provenance: false
+
+      - name: docker scan
+        run: |  
+           jf docker pull ${{ vars.JF_URL }}/${{ github.event.inputs.rt_docker_repo }}/${{ github.event.inputs.docker_image_name }}
+           jf docker scan ${{ vars.JF_URL }}/${{ github.event.inputs.rt_docker_repo }}/${{ github.event.inputs.docker_image_name }}
       
       - name: Docker Add Package to Build
         run: |  
