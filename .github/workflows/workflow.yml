@@ -2,11 +2,6 @@ name: "github-ejs-build"
 on: 
   workflow_dispatch:
     inputs:
-      build_name:
-        required: true
-        type: string
-        default: "carm-github-ejs"
-        description: "Build name used as artifact name"
       rt_npm_remote_repo_id:
         required: true
         type: string
@@ -102,7 +97,6 @@ jobs:
         id: build
         with:
           push: true
-          platforms: linux/amd64, linux/arm64
           tags: ${{ vars.JF_URL }}/${{ env.DOCKER_REPO }}/${{ env.IMAGE_NAME }}:${{ github.run_number }}
           provenance: false
       
@@ -126,6 +120,7 @@ jobs:
       - name: Publish Build Info
         env:
           JFROG_CLI_BUILD_PROJECT: ${{ vars.JF_PROJECT }}
+          JF_PROJECT: ${{ vars.JF_PROJECT }}
         run: |
           jf rt build-collect-env
           jf rt build-add-git
