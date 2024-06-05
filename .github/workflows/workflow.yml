@@ -47,6 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       JF_URL: https://${{ vars.JF_URL }}/
+      JF_PROJECT: ${{ vars.JF_PROJECT_KEY }}
       DOCKER_REPO: ${{ github.event.inputs.rt_docker_repo }}
       IMAGE_NAME: ${{ github.event.inputs.docker_image_name }}
     # Here we install all the tools : docker buildx, QEMU, JDK 11, JFrog CLI
@@ -110,17 +111,14 @@ jobs:
            echo "${{ vars.JF_URL }}/${{ env.DOCKER_REPO }}/${{ env.IMAGE_NAME }}:${{ github.run_number }}@${{ steps.build.outputs.digest }}" > metadata.json
            jf rt build-docker-create ${{ env.DOCKER_REPO }} --image-file metadata.json 
       
-      #- name: Publish Release Note and HELM charts
-      #  env:
-      #    JFROG_CLI_BUILD_NAME: ${{ github.event.inputs.build_name }}
-      #  run: |
-      #    jf rt u rn/Release-Note-App-1.0.pdf ${{ github.event.inputs.rt_generic_repo }} --flat --module="release_note:$GITHUB_RUN_NUMBER"
-      #    jf rt u "helm/*.tgz" ${{ github.event.inputs.rt_helm_repo }} --flat --module="helm_charts:$GITHUB_RUN_NUMBER"
+      - name: Publish Release Note and HELM charts
+        env:
+          JFROG_CLI_BUILD_NAME: ${{ github.event.inputs.build_name }}
+        run: |
+          jf rt u rn/Release-Note-App-1.0.pdf ${{ github.event.inputs.rt_generic_repo }} --flat --module="release_note:$GITHUB_RUN_NUMBER"
+          jf rt u "helm/*.tgz" ${{ github.event.inputs.rt_helm_repo }} --flat --module="helm_charts:$GITHUB_RUN_NUMBER"
       
       - name: Publish Build Info
-        env:
-          JFROG_CLI_BUILD_PROJECT: ${{ vars.JF_PROJECT }}
-          JF_PROJECT: ${{ vars.JF_PROJECT }}
         run: |
           jf rt build-collect-env
           jf rt build-add-git
