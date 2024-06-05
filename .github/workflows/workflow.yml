@@ -76,7 +76,7 @@ jobs:
       - name: NPM Audit 
         run: |
           jf npmc --repo-resolve ${{ github.event.inputs.rt_npm_remote_repo_id }}
-          jf npm i --omit dev --build-name=${{ github.event.inputs.build_name }} --build-number=$GITHUB_RUN_NUMBER
+          jf npm i --omit dev
           
           if [ ${{ github.event.inputs.xr_enable_scan }} == 'true' ]; then
           	echo "Execute Xray scanning ..."
