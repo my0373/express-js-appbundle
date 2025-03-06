@@ -1,0 +1,99 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- main
+
+pool:
+  vmImage: ubuntu-latest
+
+parameters:
+- name: prodName
+  displayName: Docker Image Name
+  type: string
+  default: 'ohadz-ado-npm'
+- name: registry
+  displayName: Registry Hostname
+  type: string
+  default: soleng.jfrog.io
+- name: targetRepo
+  displayName: Target Repo to push to
+  type: string
+  default: 'ohadz-test-docker-local'
+ 
+variables:
+ prodName: ${{ parameters.prodName }}
+ registry: ${{ parameters.registry }}
+ targetRepo: ${{ parameters.targetRepo }}
+ buildContext: '$(prodName)'
+ imageNameTb: '$(registry)/$(targetRepo)/$(prodName)'
+ imageNameBase: '$(registry)/$(targetRepo)/$(prodName)'
+
+steps:
+- task: NodeTool@0
+  inputs:
+    versionSource: 'spec'
+    versionSpec: '18.x'
+    checkLatest: true
+- task: JFrogNpm@1
+  inputs:
+    command: 'install'
+    artifactoryConnection: 'soleng-ohadzlocal'
+    sourceRepo: 'ohadz-test-npm'
+    workingFolder: './Source'
+    collectBuildInfo: true
+    threads: '3'
+    buildName: '$(Build.DefinitionName)'
+    buildNumber: '$(Build.BuildId)'
+    includeEnvVars: true
+- task: JFrogNpm@1
+  inputs:
+    command: 'pack and publish'
+    artifactoryConnection: 'soleng-ohadzlocal'
+    targetRepo: 'ohadz-test-npm'
+    workingFolder: './Source'
+    collectBuildInfo: true
+    buildName: '$(Build.DefinitionName)'
+    buildNumber: '$(Build.BuildId)'
+    includeEnvVars: true
+- task: Docker@2
+  inputs:
+    containerRegistry: 'JF-DeckerReg-ohadzlocal'
+    repository: '$(targetRepo)/$(buildContext)'
+    command: 'build'
+    Dockerfile: './Source/Dockerfile'
+
+- task: JFrogDocker@1
+  displayName: 'Push Image'
+  inputs:
+    command: 'Push'
+    artifactoryConnection: 'soleng-ohadzlocal'
+    imageName: '$(imageNameTb):$(Build.BuildId)'
+    collectBuildInfo: true
+    buildName: '$(Build.DefinitionName)'
+    buildNumber: '$(Build.BuildId)'
+    includeEnvVars: true
+    threads: '3'
+    skipLogin: false
+
+- task: JFrogPublishBuildInfo@1
+  inputs:
+    artifactoryConnection: 'soleng-ohadzlocal'
+    buildName: '$(Build.DefinitionName)'
+    buildNumber: '$(Build.BuildId)'
+
+- task: JFrogBuildScan@1
+  inputs:
+    xrayConnection: 'soleng-ohadzlocal-xray'
+    buildName: '$(Build.DefinitionName)'
+    buildNumber: '$(Build.BuildId)'
+    allowFailBuild: false
+    vuln: true
+- task: JFrogAudit@1
+  inputs:
+    xrayConnection: 'soleng-ohadzlocal-xray'
+    workingDirectory: './Source'
+    watchesSource: 'none'
+    licenses: true
